@@ -4,10 +4,12 @@ Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"context"
 	"encoding/csv"
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
@@ -19,8 +21,6 @@ var quizCmd = &cobra.Command{
 	Short: "Launch quiz",
 	Long:  `Launch quiz from csv file`,
 	Run: func(cmd *cobra.Command, args []string) {
-		log.Println("quiz called")
-
 		inputFile, _ := cmd.Flags().GetString("file")
 		log.Println("file: " + inputFile)
 
@@ -36,23 +36,40 @@ var quizCmd = &cobra.Command{
 		}
 
 		numCorrect := 0
-		for idx, task := range tasks {
-			promptWord := promptui.Prompt{
-				Label: fmt.Sprintf("Problem #%d: %s", idx+1, task[0]),
-			}
-			word, err := promptWord.Run()
-			if err != nil {
-				log.Fatal("Prompt failed:", err)
-				return
-			}
-			if word == task[1] {
-				fmt.Println("The answer is right")
-				numCorrect++
 
-			} else {
-				fmt.Println("The answer is wrong. Correct answer is " + task[1])
+		timeout, _ := cmd.Flags().GetInt("timeout")
+		fmt.Printf("Timeout: %d seconds\n", timeout)
+
+		ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)
+		defer cancel()
+
+	SolveQuiz:
+		for idx, task := range tasks {
+			select {
+
+			case <-ctx.Done():
+				fmt.Printf("Timeout exceeded: %d \n", timeout)
+				break SolveQuiz
+
+			default:
+				promptWord := promptui.Prompt{
+					Label: fmt.Sprintf("Problem #%d: %s", idx+1, task[0]),
+				}
+				word, err := promptWord.Run()
+				if err != nil {
+					log.Fatal("Prompt failed:", err)
+					return
+				}
+				if word == task[1] {
+					fmt.Println("The answer is right")
+					numCorrect++
+
+				} else {
+					fmt.Println("The answer is wrong. Correct answer is " + task[1])
+				}
 			}
 		}
+
 		fmt.Printf("%d correct answers out of %d tasks \n", numCorrect, len(tasks))
 	},
 }
@@ -60,4 +77,5 @@ var quizCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(quizCmd)
 	quizCmd.Flags().StringP("file", "f", "problems.csv", "Quiz file path. Defaults to 'problems.csv'")
+	quizCmd.Flags().IntP("timeout", "t", 30, "Quiz solution time limit in seconds. Defaults to 30")
 }
