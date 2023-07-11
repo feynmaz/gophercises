@@ -44,6 +44,10 @@ var quizCmd = &cobra.Command{
 			}
 			tasks = dest
 		}
+		limit, _ := cmd.Flags().GetInt("limit")
+		if limit > 0 && limit < len(tasks) {
+			tasks = tasks[:limit]
+		}
 
 		numCorrect := 0
 
@@ -97,4 +101,5 @@ func init() {
 	quizCmd.Flags().StringP("file", "f", "problems.csv", "Quiz file path. Defaults to 'problems.csv'")
 	quizCmd.Flags().IntP("timeout", "t", 30, "Quiz solution time limit in seconds. Defaults to 30")
 	quizCmd.Flags().BoolP("shuffle", "s", false, "Whether to shuffle the quiz order. Defaults to false")
+	quizCmd.Flags().IntP("limit", "l", 0, "Count of tasks to set")
 }
