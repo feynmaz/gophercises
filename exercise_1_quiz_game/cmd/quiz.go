@@ -4,12 +4,13 @@ Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"strings"
 	"context"
 	"encoding/csv"
 	"fmt"
 	"log"
+	"math/rand"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/manifoldco/promptui"
@@ -34,6 +35,15 @@ var quizCmd = &cobra.Command{
 		tasks, err := csvReader.ReadAll()
 		if err != nil {
 			log.Fatal(err)
+		}
+		doShuffle, _ := cmd.Flags().GetBool("shuffle")
+		if doShuffle {
+			dest := make([][]string, len(tasks))
+			perm := rand.Perm(len(tasks))
+			for i, v := range perm {
+				dest[v] = tasks[i]
+			}
+			tasks = dest
 		}
 
 		numCorrect := 0
@@ -61,7 +71,7 @@ var quizCmd = &cobra.Command{
 					log.Fatal("Prompt failed:", err)
 					return
 				}
-				
+
 				answer := strings.Trim(word, " ")
 				if answer == task[1] {
 					fmt.Println("The answer is right")
@@ -81,4 +91,5 @@ func init() {
 	rootCmd.AddCommand(quizCmd)
 	quizCmd.Flags().StringP("file", "f", "problems.csv", "Quiz file path. Defaults to 'problems.csv'")
 	quizCmd.Flags().IntP("timeout", "t", 30, "Quiz solution time limit in seconds. Defaults to 30")
+	quizCmd.Flags().BoolP("shuffle", "s", false, "Whether to shuffle the quiz order. Defaults to false")
 }
