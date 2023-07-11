@@ -4,7 +4,6 @@ Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"context"
 	"encoding/csv"
 	"fmt"
 	"log"
@@ -51,27 +50,21 @@ var quizCmd = &cobra.Command{
 		timeout, _ := cmd.Flags().GetInt("timeout")
 		fmt.Printf("Timeout: %d seconds\n", timeout)
 
-		ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)
-		defer cancel()
+		timer := time.NewTimer(time.Duration(timeout) * time.Second)
+		answerCh := make(chan string, 1)
 
 	SolveQuiz:
 		for idx, task := range tasks {
+			go answer(idx, task, answerCh)
+
 			select {
 
-			case <-ctx.Done():
+			case <-timer.C:
 				fmt.Printf("Timeout exceeded: %d \n", timeout)
+				close(answerCh)
 				break SolveQuiz
 
-			default:
-				promptWord := promptui.Prompt{
-					Label: fmt.Sprintf("Problem #%d: %s", idx+1, task[0]),
-				}
-				word, err := promptWord.Run()
-				if err != nil {
-					log.Fatal("Prompt failed:", err)
-					return
-				}
-
+			case word := <-answerCh:
 				answer := strings.Trim(word, " ")
 				if answer == task[1] {
 					fmt.Println("The answer is right")
@@ -85,6 +78,18 @@ var quizCmd = &cobra.Command{
 
 		fmt.Printf("%d correct answers out of %d tasks \n", numCorrect, len(tasks))
 	},
+}
+
+func answer(idx int, task []string, answerCh chan<- string) {
+	promptWord := promptui.Prompt{
+		Label: fmt.Sprintf("Problem #%d: %s", idx+1, task[0]),
+	}
+	word, err := promptWord.Run()
+	if err != nil {
+		log.Fatal("Prompt failed:", err)
+		return
+	}
+	answerCh <- word
 }
 
 func init() {
