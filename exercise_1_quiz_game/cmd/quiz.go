@@ -4,6 +4,7 @@ Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"strings"
 	"context"
 	"encoding/csv"
 	"fmt"
@@ -60,7 +61,9 @@ var quizCmd = &cobra.Command{
 					log.Fatal("Prompt failed:", err)
 					return
 				}
-				if word == task[1] {
+				
+				answer := strings.Trim(word, " ")
+				if answer == task[1] {
 					fmt.Println("The answer is right")
 					numCorrect++
 
