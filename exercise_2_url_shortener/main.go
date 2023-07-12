@@ -1,8 +1,11 @@
 package main
 
 import (
+	"flag"
 	"fmt"
+	"log"
 	"net/http"
+	"os"
 
 	"github.com/feynmaz/gophercises/exercise_2_url_shortener/handler"
 )
@@ -25,6 +28,17 @@ func main() {
 - path: /urlshort-final
   url: https://github.com/gophercises/urlshort/tree/solution
 `
+
+	yamlFile := flag.String("file", "", "YAML file to load redirect rules from")
+	flag.Parse()
+	if yamlFile != nil && *yamlFile != "" {
+		byteContent, err := os.ReadFile(*yamlFile)
+		if err != nil {
+			log.Fatal(err)
+		}
+		yaml = string(byteContent)
+	}
+
 	yamlHandler, err := handler.YAMLHandler([]byte(yaml), mapHandler)
 	if err != nil {
 		panic(err)

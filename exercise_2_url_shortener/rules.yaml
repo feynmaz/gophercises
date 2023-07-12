@@ -1,0 +1,4 @@
+- path: /urlshort
+  url: https://github.com/feynmaz/gophercises
+- path: /urlshort-final
+  url: https://github.com/feynmaz/gophercises/tree/master/exercise_2_url_shortener
