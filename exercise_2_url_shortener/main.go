@@ -1,11 +1,8 @@
 package main
 
 import (
-	"flag"
 	"fmt"
-	"log"
 	"net/http"
-	"os"
 
 	"github.com/feynmaz/gophercises/exercise_2_url_shortener/handler"
 )
@@ -20,31 +17,47 @@ func main() {
 	}
 	mapHandler := handler.MapHandler(pathsToUrls, mux)
 
-	// Build the YAMLHandler using the mapHandler as the
-	// fallback
-	yaml := `
-- path: /urlshort
-  url: https://github.com/gophercises/urlshort
-- path: /urlshort-final
-  url: https://github.com/gophercises/urlshort/tree/solution
-`
+	// 	yaml := `
+	// - path: /urlshort
+	//   url: https://github.com/gophercises/urlshort
+	// - path: /urlshort-final
+	//   url: https://github.com/gophercises/urlshort/tree/solution
+	// `
 
-	yamlFile := flag.String("file", "", "YAML file to load redirect rules from")
-	flag.Parse()
-	if yamlFile != nil && *yamlFile != "" {
-		byteContent, err := os.ReadFile(*yamlFile)
-		if err != nil {
-			log.Fatal(err)
+	// 	yamlFile := flag.String("file", "", "YAML file to load redirect rules from")
+	// 	flag.Parse()
+	// 	if yamlFile != nil && *yamlFile != "" {
+	// 		byteContent, err := os.ReadFile(*yamlFile)
+	// 		if err != nil {
+	// 			log.Fatal(err)
+	// 		}
+	// 		yaml = string(byteContent)
+	// 	}
+
+	// 	yamlHandler, err := handler.YAMLHandler([]byte(yaml), mapHandler)
+	// 	if err != nil {
+	// 		panic(err)
+	// 	}
+
+	jsonData := `
+	[
+		{
+			"path":"/urlshort",
+			"url":"https://github.com/gophercises/urlshort"
+		},
+		{
+			"path":"/urlshort-final",
+			"url":"https://github.com/gophercises/urlshort/tree/solution"
 		}
-		yaml = string(byteContent)
-	}
+	]`
 
-	yamlHandler, err := handler.YAMLHandler([]byte(yaml), mapHandler)
+	JSONHandler, err := handler.JSONHandler([]byte(jsonData), mapHandler)
 	if err != nil {
 		panic(err)
 	}
+
 	fmt.Println("Starting the server on :8080")
-	http.ListenAndServe(":8080", yamlHandler)
+	http.ListenAndServe(":8080", JSONHandler)
 }
 
 func defaultMux() *http.ServeMux {
